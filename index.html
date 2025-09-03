@@ -54,7 +54,39 @@
         >
           <h3>Nächste Ausgleichsflächen:</h3>
           <div class="results-wrapper">
+            <button
+              id="scroll-left"
+              class="scroll-arrow scroll-arrow-left"
+              aria-label="Previous"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="15,18 9,12 15,6"></polyline>
+              </svg>
+            </button>
             <div id="results-scroll" class="results-scroll"></div>
+            <button
+              id="scroll-right"
+              class="scroll-arrow scroll-arrow-right"
+              aria-label="Next"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="9,18 15,12 9,6"></polyline>
+              </svg>
+            </button>
             <div class="scroll-gradient-left"></div>
             <div class="scroll-gradient-right"></div>
           </div>

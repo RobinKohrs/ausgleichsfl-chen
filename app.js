@@ -25,6 +25,8 @@ const elements = {
   suggestionsList: document.getElementById("suggestions-list"),
   resultsContainer: document.getElementById("results-container"),
   resultsScroll: document.getElementById("results-scroll"),
+  scrollLeft: document.getElementById("scroll-left"),
+  scrollRight: document.getElementById("scroll-right"),
   scrollDots: document.getElementById("scroll-dots"),
   polygonOverlay: document.getElementById("polygon-overlay"),
   polygonDetails: document.getElementById("polygon-details"),
@@ -160,6 +162,9 @@ function updateUI() {
   elements.loadingSearch.style.display = state.isLoading.search
     ? "block"
     : "none";
+
+  // Update arrow button states
+  updateArrowStates();
 }
 
 // Render results cards
@@ -610,6 +615,78 @@ function scrollToIndex(index) {
   updateUI();
 }
 
+// Scroll left
+function scrollLeft() {
+  if (state.currentScrollIndex > 0) {
+    scrollToIndex(state.currentScrollIndex - 1);
+  }
+}
+
+// Scroll right
+function scrollRight() {
+  if (state.currentScrollIndex < state.nearestPolygons.length - 1) {
+    scrollToIndex(state.currentScrollIndex + 1);
+  }
+}
+
+// Update arrow button states
+function updateArrowStates() {
+  if (elements.scrollLeft && elements.scrollRight) {
+    elements.scrollLeft.disabled = state.currentScrollIndex === 0;
+    elements.scrollRight.disabled =
+      state.currentScrollIndex >= state.nearestPolygons.length - 1;
+  }
+}
+
+// Mobile swipe support
+function setupSwipeSupport() {
+  let startX = 0;
+  let startY = 0;
+  let isScrolling = false;
+
+  elements.resultsScroll.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isScrolling = false;
+  });
+
+  elements.resultsScroll.addEventListener("touchmove", (e) => {
+    if (!startX || !startY) return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(currentX - startX);
+    const diffY = Math.abs(currentY - startY);
+
+    // If horizontal movement is greater than vertical, it's a swipe
+    if (diffX > diffY) {
+      isScrolling = true;
+    }
+  });
+
+  elements.resultsScroll.addEventListener("touchend", (e) => {
+    if (!startX || !startY || !isScrolling) return;
+
+    const endX = e.changedTouches[0].clientX;
+    const diffX = startX - endX;
+    const threshold = 50; // Minimum swipe distance
+
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0) {
+        // Swipe left - go to next
+        scrollRight();
+      } else {
+        // Swipe right - go to previous
+        scrollLeft();
+      }
+    }
+
+    startX = 0;
+    startY = 0;
+    isScrolling = false;
+  });
+}
+
 // Close polygon details
 function closePolygonDetails() {
   state.selectedPolygonData = null;
@@ -684,6 +761,17 @@ document.addEventListener("DOMContentLoaded", function () {
   elements.numResults.addEventListener("change", handleNumResultsChange);
   elements.closeButton.addEventListener("click", closePolygonDetails);
   elements.polygonOverlay.addEventListener("click", closePolygonDetails);
+
+  // Arrow button event listeners
+  if (elements.scrollLeft) {
+    elements.scrollLeft.addEventListener("click", scrollLeft);
+  }
+  if (elements.scrollRight) {
+    elements.scrollRight.addEventListener("click", scrollRight);
+  }
+
+  // Setup mobile swipe support
+  setupSwipeSupport();
 
   // Initialize data and map
   initializeData();
