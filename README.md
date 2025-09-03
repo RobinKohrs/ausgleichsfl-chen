@@ -1,41 +1,62 @@
-# Ausgleichsfläche near me
+# Ausgleichsflächen Finder
 
-A modern web application to find the nearest Ausgleichsflächen (compensation areas) in northern Germany using spatial indexing and interactive mapping.
+A simple web application to find the nearest Ausgleichsflächen (compensation areas) in Northern Germany.
 
 ## Features
 
-- 🗺️ **Interactive Map**: Satellite imagery with restricted bounds to northern Germany
-- 🔍 **Spatial Search**: Fast spatial indexing with Flatbush for efficient nearest neighbor queries
-- 📍 **Click to Search**: Click anywhere on the map or search by address
-- 🎨 **Modern UI**: Glassmorphism design with smooth scroll snapping
-- 📊 **Detailed Info**: Modal overlays showing polygon properties
-- 🇩🇪 **German Interface**: Fully localized for German users
+- Interactive map with satellite imagery
+- Address search with autocomplete suggestions
+- Click on map to find nearest areas
+- Spatial indexing for fast polygon queries
+- Distance calculations using Turf.js
+- Responsive design with modern UI
 
 ## Technology Stack
 
-- **Frontend**: Svelte 5 with Vite
-- **Mapping**: Leaflet with Esri satellite imagery
-- **Spatial Index**: Flatbush for fast polygon searches
-- **Geometry**: Turf.js for distance calculations
-- **Styling**: Modern CSS with glassmorphism effects
+- **Frontend**: Plain HTML, CSS, and JavaScript (no frameworks)
+- **Mapping**: Leaflet.js with satellite tiles
+- **Spatial Data**: Flatbush for spatial indexing
+- **Geospatial**: Turf.js for distance calculations
+- **Data**: GeoJSON with pre-built spatial index
 
-## Data
+## Getting Started
 
-The application uses MultiPolygon GeoJSON data with a pre-built spatial index for fast searching. The spatial index covers northern Germany (approximately 53.36-55.05°N, 8.29-11.30°E).
+1. **Install dependencies**: No build tools required! All libraries are loaded via CDN.
 
-## Development
+2. **Start the server**:
 
-```bash
-# Install dependencies
-npm install
+   ```bash
+   npm run dev
+   # or
+   python3 -m http.server 8000
+   ```
 
-# Start development server
-npm run dev
+3. **Open your browser**: Navigate to `http://localhost:8000`
 
-# Build for production
-npm run build
-```
+## Data Files
+
+The app requires these files in the `public/` directory:
+
+- `af_sh.geojson` - GeoJSON data of Ausgleichsflächen
+- `af_sh.idx` - Pre-built spatial index
+- `af_sh.json` - Properties data
+
+## How It Works
+
+1. **Spatial Index**: Uses Flatbush to create a fast spatial index of all polygons
+2. **Search**: When you enter an address or click the map, it finds nearby polygons
+3. **Distance Calculation**: Uses Turf.js to calculate precise distances to polygon boundaries
+4. **Visualization**: Displays results on an interactive map with different colors
+
+## Browser Compatibility
+
+Works in all modern browsers that support:
+
+- ES6+ JavaScript features
+- CSS Grid and Flexbox
+- Fetch API
+- Web Workers (for spatial indexing)
 
 ## Deployment
 
-This application is optimized for deployment on Vercel or similar static hosting platforms.
+Simply upload all files to any web server. No build process required!

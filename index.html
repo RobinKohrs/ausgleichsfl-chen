@@ -4,23 +4,78 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ausgleichsfläche near me</title>
-
-    <!-- Leaflet CSS for the map -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
     />
-
-    <!-- Your App's CSS -->
-    <link rel="stylesheet" href="/app.css" />
+    <link rel="stylesheet" href="app.css" />
   </head>
   <body>
-    <!-- Svelte will mount the app here -->
-    <div id="app"></div>
+    <div class="app-container">
+      <h1>Ausgleichsfläche near me</h1>
 
-    <!-- Load our compiled JavaScript -->
-    <script type="module" src="/src/main.js"></script>
+      <div id="loading-data" class="loading-state">
+        Lade räumlichen Index...
+      </div>
+
+      <div id="main-content" style="display: none">
+        <div class="search-section">
+          <input
+            type="text"
+            id="address-input"
+            placeholder="Adresse eingeben oder auf die Karte klicken..."
+          />
+
+          <!-- Address Suggestions -->
+          <ul
+            id="suggestions-list"
+            class="suggestions-list"
+            style="display: none"
+          ></ul>
+        </div>
+
+        <!-- Results Container Above Map -->
+        <div
+          id="results-container"
+          class="results-container"
+          style="display: none"
+        >
+          <h3>Nächste Ausgleichsflächen:</h3>
+          <div class="results-wrapper">
+            <div id="results-scroll" class="results-scroll"></div>
+            <div class="scroll-gradient-left"></div>
+            <div class="scroll-gradient-right"></div>
+          </div>
+          <div id="scroll-dots" class="scroll-dots"></div>
+        </div>
+
+        <!-- Selected Polygon Data Overlay -->
+        <div
+          id="polygon-overlay"
+          class="polygon-overlay"
+          style="display: none"
+        ></div>
+        <div id="polygon-details" class="polygon-details" style="display: none">
+          <h4>
+            <span id="polygon-title"></span>
+            <button id="close-button" class="close-button">×</button>
+          </h4>
+          <div id="details-content" class="details-content"></div>
+        </div>
+
+        <div id="loading-search" class="loading-state" style="display: none">
+          Suche nach nächsten Ausgleichsflächen...
+        </div>
+
+        <div class="map-section">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/flatbush@4.5.0/flatbush.js"></script>
+    <script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
