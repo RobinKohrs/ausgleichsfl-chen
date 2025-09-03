@@ -36,8 +36,37 @@ h1 {
 }
 
 .search-section {
-    margin-bottom: 1rem;
-    position: relative;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.results-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.results-selector label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.results-selector select {
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.results-selector select:focus {
+  outline: none;
+  border-color: #999;
+  box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.1);
 }
 
 .results-container {

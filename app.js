@@ -14,12 +14,14 @@ let mapInstance;
 let geoLayers;
 let debounceTimer;
 let dataPromise;
+let currentMarker = null; // Track the current marker
 
 // DOM elements
 const elements = {
   loadingData: document.getElementById("loading-data"),
   mainContent: document.getElementById("main-content"),
   addressInput: document.getElementById("address-input"),
+  numResults: document.getElementById("num-results"),
   suggestionsList: document.getElementById("suggestions-list"),
   resultsContainer: document.getElementById("results-container"),
   resultsScroll: document.getElementById("results-scroll"),
@@ -38,6 +40,14 @@ const whiteDotIcon = L.divIcon({
   html: '<div style="width: 20px; height: 20px; background-color: white; border: 3px solid #333; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
   iconSize: [20, 20],
   iconAnchor: [10, 10],
+});
+
+// Create an "X" delete marker
+const deleteMarkerIcon = L.divIcon({
+  className: "delete-marker",
+  html: '<div style="width: 24px; height: 24px; background-color: #ff4444; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; cursor: pointer;">×</div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 // Configure Leaflet default markers to use our white dot
@@ -154,24 +164,49 @@ function updateUI() {
 
 // Render results cards
 function renderResults() {
-  const colors = ["tomato", "#ff6b6b", "#ffa500", "#ffb347", "#ffd700"];
+  const colors = [
+    "tomato",
+    "#ff6b6b",
+    "#ffa500",
+    "#ffb347",
+    "#ffd700",
+    "#ff69b4",
+    "#32cd32",
+    "#1e90ff",
+    "#ffa500",
+    "#9370db",
+    "#ff1493",
+    "#00ced1",
+    "#ff6347",
+    "#7b68ee",
+    "#20b2aa",
+    "#ff4500",
+    "#daa520",
+    "#cd5c5c",
+    "#4682b4",
+    "#dda0dd",
+  ];
 
   elements.resultsScroll.innerHTML = state.nearestPolygons
-    .map(
-      (p, index) => `
+    .map((p, index) => {
+      const entwZiel =
+        p.properties && p.properties.entw_ziel
+          ? p.properties.entw_ziel
+          : `Fläche #${index + 1}`;
+      return `
             <div class="result-card" onclick="showOnMap(${index})">
                 <div class="result-info">
-                    <span class="result-title">Fläche #${index + 1}</span>
+                    <span class="result-title">${entwZiel}</span>
                     <span class="result-distance">${p.distance.toFixed(
                       2
                     )} km</span>
                 </div>
                 <div class="color-indicator" style="background-color: ${
-                  colors[index]
+                  colors[index % colors.length]
                 }"></div>
             </div>
-        `
-    )
+        `;
+    })
     .join("");
 
   // Render scroll dots
@@ -189,7 +224,12 @@ function renderResults() {
 
 // Render polygon details
 function renderPolygonDetails() {
-  elements.polygonTitle.textContent = `Ausgewählte Fläche #${state.selectedPolygonData.index}`;
+  const entwZiel =
+    state.selectedPolygonData.properties &&
+    state.selectedPolygonData.properties.entw_ziel
+      ? state.selectedPolygonData.properties.entw_ziel
+      : `Fläche #${state.selectedPolygonData.index}`;
+  elements.polygonTitle.textContent = entwZiel;
 
   let detailsHTML = `
         <div class="detail-item">
@@ -331,7 +371,8 @@ async function findNearestPolygons(lat, lon) {
   });
 
   candidates.sort((a, b) => a.distance - b.distance);
-  state.nearestPolygons = candidates.slice(0, 5);
+  const numResults = parseInt(elements.numResults.value);
+  state.nearestPolygons = candidates.slice(0, numResults);
 
   console.log(
     `Nearest 5 distances: ${state.nearestPolygons
@@ -369,11 +410,36 @@ async function findNearestPolygons(lat, lon) {
 function showAllPolygonsOnMap(polygons) {
   if (!mapInstance) return;
 
-  // Clear previous layers
+  // Clear previous layers and marker
   geoLayers.clearLayers();
+  if (currentMarker) {
+    mapInstance.removeLayer(currentMarker);
+    currentMarker = null;
+  }
 
   // Add all polygons to the map with different colors
-  const colors = ["tomato", "#ff6b6b", "#ffa500", "#ffb347", "#ffd700"];
+  const colors = [
+    "tomato",
+    "#ff6b6b",
+    "#ffa500",
+    "#ffb347",
+    "#ffd700",
+    "#ff69b4",
+    "#32cd32",
+    "#1e90ff",
+    "#ffa500",
+    "#9370db",
+    "#ff1493",
+    "#00ced1",
+    "#ff6347",
+    "#7b68ee",
+    "#20b2aa",
+    "#ff4500",
+    "#daa520",
+    "#cd5c5c",
+    "#4682b4",
+    "#dda0dd",
+  ];
   let allBounds = null;
 
   polygons.forEach((polygon, index) => {
@@ -387,6 +453,16 @@ function showAllPolygonsOnMap(polygons) {
       },
     }).addTo(geoLayers);
 
+    // Add click handler to polygon to show overlay
+    polygonLayer.on("click", function (e) {
+      // Set selected polygon data
+      state.selectedPolygonData = {
+        ...polygon,
+        index: index + 1,
+      };
+      updateUI();
+    });
+
     // Extend bounds to include all polygons
     if (allBounds) {
       allBounds.extend(polygonLayer.getBounds());
@@ -397,9 +473,38 @@ function showAllPolygonsOnMap(polygons) {
 
   // Add marker for user's selected address
   if (state.selectedPoint) {
-    L.marker([state.selectedPoint.lat, state.selectedPoint.lon], {
-      icon: whiteDotIcon,
-    }).addTo(geoLayers);
+    currentMarker = L.marker(
+      [state.selectedPoint.lat, state.selectedPoint.lon],
+      {
+        icon: whiteDotIcon,
+      }
+    ).addTo(mapInstance);
+
+    // Add click handler to marker to show delete option
+    currentMarker.on("click", function () {
+      // Remove current marker and add delete marker
+      mapInstance.removeLayer(currentMarker);
+      currentMarker = L.marker(
+        [state.selectedPoint.lat, state.selectedPoint.lon],
+        {
+          icon: deleteMarkerIcon,
+        }
+      ).addTo(mapInstance);
+
+      // Add click handler to delete marker
+      currentMarker.on("click", function () {
+        mapInstance.removeLayer(currentMarker);
+        currentMarker = null;
+        state.selectedPoint = null;
+        state.addressInput = "";
+        state.suggestions = [];
+        state.nearestPolygons = [];
+        state.selectedPolygonData = null;
+        updateUI();
+        geoLayers.clearLayers();
+      });
+    });
+
     allBounds.extend([state.selectedPoint.lat, state.selectedPoint.lon]);
   }
 
@@ -422,15 +527,12 @@ function showOnMap(index) {
     return;
   }
 
-  // Set selected polygon data
-  state.selectedPolygonData = {
-    ...polygon,
-    index: index + 1,
-  };
-  updateUI();
-
-  // Clear previous layers
+  // Clear previous layers and marker
   geoLayers.clearLayers();
+  if (currentMarker) {
+    mapInstance.removeLayer(currentMarker);
+    currentMarker = null;
+  }
 
   // Add selected polygon to the map with better styling
   const polygonLayer = L.geoJSON(polygon.feature, {
@@ -443,12 +545,52 @@ function showOnMap(index) {
     },
   }).addTo(geoLayers);
 
+  // Add click handler to polygon to show overlay
+  polygonLayer.on("click", function (e) {
+    // Set selected polygon data
+    state.selectedPolygonData = {
+      ...polygon,
+      index: index + 1,
+    };
+    updateUI();
+  });
+
   console.log("Polygon displayed on map");
 
   // Add marker for user's selected address
-  const marker = L.marker([state.selectedPoint.lat, state.selectedPoint.lon], {
-    icon: whiteDotIcon,
-  }).addTo(geoLayers);
+  if (state.selectedPoint) {
+    currentMarker = L.marker(
+      [state.selectedPoint.lat, state.selectedPoint.lon],
+      {
+        icon: whiteDotIcon,
+      }
+    ).addTo(mapInstance);
+
+    // Add click handler to marker to show delete option
+    currentMarker.on("click", function () {
+      // Remove current marker and add delete marker
+      mapInstance.removeLayer(currentMarker);
+      currentMarker = L.marker(
+        [state.selectedPoint.lat, state.selectedPoint.lon],
+        {
+          icon: deleteMarkerIcon,
+        }
+      ).addTo(mapInstance);
+
+      // Add click handler to delete marker
+      currentMarker.on("click", function () {
+        mapInstance.removeLayer(currentMarker);
+        currentMarker = null;
+        state.selectedPoint = null;
+        state.addressInput = "";
+        state.suggestions = [];
+        state.nearestPolygons = [];
+        state.selectedPolygonData = null;
+        updateUI();
+        geoLayers.clearLayers();
+      });
+    });
+  }
 
   // Zoom to just the polygon bounds (not including marker)
   mapInstance.fitBounds(polygonLayer.getBounds(), {
@@ -527,10 +669,19 @@ function initializeMap() {
   }, 100);
 }
 
+// Handle number of results change
+function handleNumResultsChange() {
+  // If we have a selected point, re-search with new number of results
+  if (state.selectedPoint) {
+    findNearestPolygons(state.selectedPoint.lat, state.selectedPoint.lon);
+  }
+}
+
 // Initialize the application
 document.addEventListener("DOMContentLoaded", function () {
   // Set up event listeners
   elements.addressInput.addEventListener("input", handleAddressInput);
+  elements.numResults.addEventListener("change", handleNumResultsChange);
   elements.closeButton.addEventListener("click", closePolygonDetails);
   elements.polygonOverlay.addEventListener("click", closePolygonDetails);
 
