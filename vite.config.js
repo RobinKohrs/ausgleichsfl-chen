@@ -8,5 +8,9 @@ export default defineConfig({
   build: {
     // Output the built files to a 'dist' directory
     outDir: "dist",
+    // Ensure assets are properly handled
+    assetsDir: "assets",
   },
+  // Ensure proper asset handling
+  assetsInclude: ["**/*.geojson", "**/*.idx"],
 });

@@ -4,6 +4,21 @@
   import Flatbush from "flatbush";
   import * as turf from "@turf/turf";
 
+  // Import Leaflet CSS - this fixes the vite-plugin-sveltekit 3.0 compatibility issue
+  import "leaflet/dist/leaflet.css";
+
+  // Fix Leaflet marker icons for production
+  import markerIcon from "leaflet/dist/images/marker-icon.png";
+  import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+  import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+  // Configure Leaflet default markers
+  L.Icon.Default.mergeOptions({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon2x,
+    shadowUrl: markerShadow,
+  });
+
   // Svelte 5 State Management
   let addressInput = $state("");
   let suggestions = $state([]);
@@ -20,9 +35,7 @@
   const dataPromise = (async () => {
     const timestamp = Date.now(); // Force cache refresh
     const [idxBuffer, properties] = await Promise.all([
-      fetch(`./af_sh.idx?t=${timestamp}`).then((res) =>
-        res.arrayBuffer()
-      ),
+      fetch(`./af_sh.idx?t=${timestamp}`).then((res) => res.arrayBuffer()),
       fetch(`./af_sh.json?t=${timestamp}`).then((res) => res.json()),
     ]);
 
@@ -46,10 +59,18 @@
   })();
 
   // Wait for data to load and update the loading state
-  dataPromise.then((data) => {
-    console.log(`Spatial index loaded successfully`);
-    isLoading.data = false;
-  });
+  dataPromise
+    .then((data) => {
+      console.log(`Spatial index loaded successfully`);
+      console.log(
+        `Index bounds: [${data.index.minX}, ${data.index.minY}, ${data.index.maxX}, ${data.index.maxY}]`
+      );
+      isLoading.data = false;
+    })
+    .catch((error) => {
+      console.error("Failed to load spatial data:", error);
+      isLoading.data = false;
+    });
 
   // Debounce function to prevent API spam
   let debounceTimer;
@@ -271,37 +292,51 @@
   onMount(() => {
     // Wait for the DOM to be ready
     setTimeout(() => {
-      const mapElement = document.getElementById("map");
-      if (mapElement) {
-        // Northern Germany bounds (from our spatial index)
-        const northernGermanyBounds = [
-          [53.36, 8.29], // Southwest corner
-          [55.05, 11.3], // Northeast corner
-        ];
+      try {
+        const mapElement = document.getElementById("map");
+        if (mapElement) {
+          console.log("Initializing map...");
 
-        mapInstance = L.map("map", {
-          center: [54.2, 9.8],
-          zoom: 8,
-          maxBounds: northernGermanyBounds,
-          maxBoundsViscosity: 1.0, // Prevents dragging outside bounds
-          minZoom: 7,
-          maxZoom: 17,
-        });
+          // Northern Germany bounds (from our spatial index)
+          const northernGermanyBounds = [
+            [53.36, 8.29], // Southwest corner
+            [55.05, 11.3], // Northeast corner
+          ];
 
-        // Add satellite basemap
-        L.tileLayer(
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          {
-            attribution:
-              '&copy; <a href="https://www.esri.com/">Esri</a>, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
-            maxZoom: 19,
-          }
-        ).addTo(mapInstance);
+          mapInstance = L.map("map", {
+            center: [54.2, 9.8],
+            zoom: 8,
+            maxBounds: northernGermanyBounds,
+            maxBoundsViscosity: 1.0, // Prevents dragging outside bounds
+            minZoom: 7,
+            maxZoom: 17,
+          });
 
-        geoLayers = L.layerGroup().addTo(mapInstance);
+          console.log("Map instance created");
 
-        // Add click event to map
-        mapInstance.on("click", handleMapClick);
+          // Add satellite basemap
+          L.tileLayer(
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            {
+              attribution:
+                '&copy; <a href="https://www.esri.com/">Esri</a>, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
+              maxZoom: 19,
+            }
+          ).addTo(mapInstance);
+
+          console.log("Tile layer added");
+
+          geoLayers = L.layerGroup().addTo(mapInstance);
+
+          // Add click event to map
+          mapInstance.on("click", handleMapClick);
+
+          console.log("Map initialization complete");
+        } else {
+          console.error("Map element not found!");
+        }
+      } catch (error) {
+        console.error("Map initialization failed:", error);
       }
     }, 100);
   });
